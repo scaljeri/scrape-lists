@@ -1,0 +1,181 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="/find-list.js"></script>
+    <script src="/create-selector.js"></script>
+    <script src="/find-common-ancestor.js"></script>
+    <script src="/highlight.js"></script>
+    <script src="/scrape.js"></script>
+  </head>
+
+  <body>
+    <main>
+      <ol>
+        <li>
+          <section>
+            <header>Title a</header>
+            <article>content about a</article>
+            <ol>
+              <li>
+                <section>
+                  <header>comment 1 about a</header>
+                  <p>comment content about a</p>
+                  <ol>
+                    <li>
+                      <section>
+                        <header>comment 1 on comment 1 about a</header>
+                        <article>comment content on comment 1 about a</article>
+                      </section>
+                    </li>
+                    <li>
+                      <section>
+                        <header>comment 2 on comment 1 about a</header>
+                      </section>
+                    </li>
+                    <li>
+                      <section>
+                        <header>comment 3 on comment 1 about a</header>
+                      </section>
+                    </li>
+                  </ol>
+                </section>
+              </li>
+              <li>
+                <section>
+                  <header>comment 2 about a</header>
+                </section>
+              </li>
+              <li>
+                <section>
+                  <header>comment 3 about a</header>
+                </section>
+              </li>
+            </ol>
+          </section>
+        </li>
+
+        <li>
+          <section>
+            <header>Title b</header>
+            <article>content about a</article>
+            <ol>
+              <li>
+                <section>
+                  <header>comment 1 about b</header>
+                </section>
+              </li>
+              <li>
+                <section>
+                  <header>comment 2 about b</header>
+                </section>
+              </li>
+              <li>
+                <section>
+                  <header>comment 3 about b</header>
+                </section>
+              </li>
+            </ol>
+          </section>
+        </li>
+
+        <li>
+          <section>
+            <header>Title c</header>
+            <article>content about c</article>
+            <ol>
+              <li>
+                <section>
+                  <header>comment 1 about c</header>
+                </section>
+              </li>
+              <li>
+                <section>
+                  <header>comment 2 about c</header>
+                </section>
+              </li>
+              <li>
+                <section>
+                  <header>comment 3 about c</header>
+                </section>
+              </li>
+            </ol>
+          </section>
+        </li>
+
+        <li>
+          <section>
+            <header>Title d</header>
+            <article>content about d</article>
+            <ol>
+              <li>
+                <section>
+                  <header>comment 1 about d</header>
+                </section>
+              </li>
+              <li>
+                <section>
+                  <header>comment 2 about d</header>
+                </section>
+              </li>
+              <li>
+                <section>
+                  <header>comment 3 about d</header>
+                  <article>comment content on comment 3 about d</article>
+                </section>
+              </li>
+            </ol>
+          </section>
+        </li>
+      </ol>
+
+      <input id="selector" />
+      <br />
+      <button id="shorten">Shorten</button>
+      <button id="lengthen">Lengthen</button>
+    </main>
+
+    <script>
+      const SCRAPES = [
+        { name: "title", selector: "ol > li > section > header" },
+        { name: "content", selector: "ol > li > section > article" },
+      ];
+
+      window.selector = "ol > li > section > header";
+      highlightClick(selector);
+      scrape(SCRAPES);
+      window.selectorParts = [];
+      const input = document.querySelector("#selector");
+      document.body.addEventListener("click", (ev) => {
+        window.selector = createSelector(ev.target, { isMulti: true });
+        highlightClick(selector);
+        input.value = selector;
+        scrape(SCRAPES);
+      });
+
+      document.querySelector("#selector").addEventListener("click", (ev) => {
+        ev.stopPropagation();
+      });
+
+      document.querySelector("#shorten").addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        const parts = selector.split(" > ");
+        window.selectorParts.push(parts.shift());
+        selector = parts.join(" > ");
+        input.value = selector;
+        highlightClick(selector);
+        scrape(SCRAPES);
+      });
+
+      document.querySelector("#lengthen").addEventListener("click", (ev) => {
+        ev.stopPropagation();
+
+        if (selectorParts.length > 0) {
+          selector = [selectorParts.pop(), selector].join(" > ");
+          input.value = selector;
+          highlightClick(selector);
+          scrape(SCRAPES);
+        }
+      });
+    </script>
+  </body>
+</html>

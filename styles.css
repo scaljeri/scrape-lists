@@ -1,0 +1,13 @@
+p {
+    margin: 0;
+}
+
+.highlight {
+    color: lightgray;
+}
+
+#selector {
+    font-size: 20px;
+    padding: 5px;
+    width: 80%;
+}
