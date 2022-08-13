@@ -1,4 +1,5 @@
 window.scrape = (scrapes) => {
+  let lists = new Map();
   const output = scrapes.reduce((acc, scrape) => {
     const els = document.querySelectorAll(scrape.selector);
     const scrapes = {};
@@ -9,95 +10,112 @@ window.scrape = (scrapes) => {
       }
       scrapes[path].elements.push({ el, scrape });
     });
-    determineLists(scrapes);
+    lists = determineLists(scrapes); //, lists);
     console.log(scrapes);
     acc.push(scrapes);
     return acc;
   }, []);
 
+  console.log("XXXXXXXx", lists);
   //   console.log(groupByList(output));
 };
 
-function groupByList(scrapes) {
-  const lists = new Map();
+// function groupByList(scrapes, lists) {
+//   scrapes.forEach((value, key) => {
+//     Object.entries(scrape).forEach(([path, listItems]) => {
+//       console.log("path=" + path);
+//       if (!lists.get(listItems.parent)) {
+//         console.log("new", lists.size);
+//         lists.set(listItems.parent, { scrapes: [] });
+//       }
 
-  scrapes.forEach((scrape) => {
-    Object.entries(scrape).forEach(([path, listItems]) => {
-      console.log("path=" + path);
-      if (!lists.get(listItems.parent)) {
-        console.log("new", lists.size);
-        lists.set(listItems.parent, { scrapes: [] });
-      }
+//       lists.get(listItems.parent).scrapes.push({ path, listItems });
+//     });
+//   });
 
-      lists.get(listItems.parent).scrapes.push({ path, listItems });
-    });
-  });
-
-  //   console.log(Object.fromEntries(lists), lists.size);
-  console.dir(lists);
-}
+//   //   console.log(Object.fromEntries(lists), lists.size);
+//   console.dir(lists);
+//   return lists;
+// }
 
 function determineLists(scrapes) {
   const lists = new Map();
 
-  Object.keys(scrapes).forEach((key) => {
-    const scrape = scrapes[key];
+  Object.keys(scrapes).forEach((path) => {
+    const scrape = scrapes[path];
     const updates = new Map();
 
-    for (let i = 0; i < scrape.elements.length; i++) {
-      for (let j = 0; j < scrape.elements.length; j++) {
+    for (let i = 0; i < scrape.elements.length - 1; i++) {
+      for (let j = i + 1; j < scrape.elements.length; j++) {
         if (i === j) continue;
 
         const first = scrape.elements[i].el;
         const second = scrape.elements[j]?.el;
+        let list;
 
         if (second) {
-          const list = findFirstCommonAncestor(first, second);
-          if (!updates.get(list)) {
-            updates.set(list, {});
-          }
+          list = findFirstCommonAncestor(first, second);
         } else {
-          scrape.parent = first;
+          list = first.parentNode;
+        }
+
+        if (!updates.get(list)) {
+          updates.set(list, {});
         }
       }
     }
 
     mergeLists(lists, updates);
   });
+
+  return lists;
 }
 
 function mergeLists(main, updates) {
-    debugger;
   updates.forEach((value, list) => {
     if (!main.get(list)) {
       // new list
       // First check: Is one of the existing lists the parent
       const mLists = Array.from(main.keys());
+      let parentList;
+      let childValue = null;
       for (let i = 0; i < mLists.length; i++) {
-        const parentList = findNestedParent(list, mLists[i], main.get(mLists[i]));
+        parentList = findNestedParent(list, mLists[i], main.get(mLists[i]));
 
         if (parentList) {
-          main.get(parentList).child = list; // never an array?!
-          value.parent = parentList;
+          const value = main.get(parentList); //.child = list; // never an array?!
+          if (value.children.get(list)) {
+            console.log("Ooooooops, not implemented yet!!!!");
+          } else {
+            childValue = {
+              children: new Map(),
+              parent: parentList,
+            };
+
+            value.children.set(list, childValue);
+          }
           break;
         }
       }
 
       // done
-      main.set(list, {});
+      main.set(list, childValue || { children: new Map() });
     }
   });
-  debugger;
 }
 
-function findNestedParent(child, parent, value) {
-  let retVal = null;
+function findNestedParent(child, parent, parentValue) {
+  if (!isParentChild(parent, child)) return null;
 
-  if (isParentChild(parent, child)) {
-    retVal = parent;
+  let retVal = parent;
 
-    while (retVal.child) {
-        retVal = retVal.child
+  const children = Array.from(parentValue.children.keys());
+
+  for (let i = 0; i < children.length; i++) {
+    if (isParentChild(children[i], child)) {
+      parentValue = parentValue.children.get(children[i]);
+      retVal = findNestedParent(child, children[i], parentValue);
+      break;
     }
   }
 
