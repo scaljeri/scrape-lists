@@ -1,4 +1,10 @@
 window.findFirstCommonAncestor = (nodeA, nodeB) => {
+  if (!nodeA) {
+    return nodeB.parentNode;
+  } else if (!nodeB) {
+    return nodeA.parentNode;
+  }
+
   let range = new Range();
   range.setStartBefore(nodeA);
   range.setEndAfter(nodeB);

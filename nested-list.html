@@ -19,7 +19,7 @@
               <li>
                 <section>
                   <header>comment 1 about a</header>
-                  <p>comment content about a</p>
+                  <article>comment content about a</article>
                   <ol>
                     <li>
                       <section>
@@ -136,19 +136,19 @@
     <script>
       const SCRAPES = [
         { name: "title", selector: "ol > li > section > header" },
-        // { name: "content", selector: "ol > li > section > article" },
+        { name: "content", selector: "ol > li > section > article" },
       ];
 
       window.selector = "ol > li > section > header";
       highlightClick(selector);
-      scrape(SCRAPES);
+      scrapeIt(SCRAPES);
       window.selectorParts = [];
       const input = document.querySelector("#selector");
       document.body.addEventListener("click", (ev) => {
         window.selector = createSelector(ev.target, { isMulti: true });
         highlightClick(selector);
         input.value = selector;
-        scrape(SCRAPES);
+        scrapeIt(SCRAPES);
       });
 
       document.querySelector("#selector").addEventListener("click", (ev) => {
@@ -162,7 +162,7 @@
         selector = parts.join(" > ");
         input.value = selector;
         highlightClick(selector);
-        scrape(SCRAPES);
+        scrapeIt(SCRAPES);
       });
 
       document.querySelector("#lengthen").addEventListener("click", (ev) => {
@@ -172,7 +172,7 @@
           selector = [selectorParts.pop(), selector].join(" > ");
           input.value = selector;
           highlightClick(selector);
-          scrape(SCRAPES);
+          scrapeIt(SCRAPES);
         }
       });
     </script>
