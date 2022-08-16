@@ -1,8 +1,8 @@
-window.findFirstCommonAncestor = (nodeA, nodeB) => {
+window.findFirstCommonAncestor = (nodeA, nodeB, root) => {
   if (!nodeA) {
-    return nodeB.parentNode;
+    return findListItem(nodeB, root);
   } else if (!nodeB) {
-    return nodeA.parentNode;
+    return findListItem(nodeA, root);
   }
 
   let range = new Range();
@@ -21,6 +21,30 @@ window.findFirstCommonAncestor = (nodeA, nodeB) => {
   return range.commonAncestorContainer;
 };
 
+window.countParentChild = (parent, child) => {
+  let count = 0;
+  while(child !== parent && child.parentNode) {
+    child = child.parentNode;
+    count++;
+  }
+
+  return count;
+}
+
 window.isParentChild = (parent, child) => {
   return parent !== child && parent.contains(child);
+};
+
+window.findListItem = (a, root) => {
+  if(!root) {
+    return a.parentNode;
+  }
+
+  let pNode = a.parentNode;
+  let item = a;
+  while (pNode !== root && pNode.parentNode) {
+    item = pNode;
+    pNode = pNode.parentNode;
+  }
+  return item;
 };

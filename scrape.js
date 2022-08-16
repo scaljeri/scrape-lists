@@ -14,77 +14,140 @@ window.scrapeIt = (scrapes) => {
     });
     console.log("scrapes", scrapes);
     levels = scrape2levels(scrapes, levels);
-    debugger;
-    // lists = determineLists(scrapes); //, lists);
-    // console.log(scrapes);
     acc.push(scrapes);
     return acc;
   }, []);
 
-  console.log("xxxx", levels);
-  debugger;
-  const groups = groupLevels(levels);
-  //   const nestedGroups = nestGroups(groups);
-  //   const scrape = scrapeGroups(nestedGroups);
-
-  //   const lKeys = Array.from(lists.keys());
-  //   const mList = lKeys[0];
-  //   const main = lists.get(lKeys[0]);
-  //   output.forEach((scrapes) => {
-  //     Object.keys(scrapes).forEach((key) => {
-  //       const els = scrapes[key];
-  //       els.elements.forEach((el) => {
-  //         addElementsToList(el, mList, main);
-  //       });
-  //     });
-  //   });
-  //   console.log("Lists", lists);
-  //   console.log("DONE");
+  groupLevels(levels);
+  const result = scrapeGroups(levels);
+  cleanup(result);
+  console.log(JSON.stringify(result, null, 4));
 };
+
+function cleanup(scrapes) {
+    scrapes.captures?.forEach(scrape => {
+        delete scrape.parent;
+        cleanup(scrape);
+    });
+}
+
+function scrapeGroups(levels) {
+  const scrp = {
+    date: new Date(),
+    captures: [],
+  };
+
+  levels.forEach((level, index) => {
+    const lists = Array.from(document.querySelectorAll(level.parent));
+    level.groups.forEach((group) => {
+      const parentList = lists.find((l) =>
+        isParentChild(l, group.elements[0].el)
+      );
+      const scrape = {
+        captures: [],
+        parent: findFirstCommonAncestor(
+          group.elements[0].el,
+          group.elements[1]?.el,
+          parentList
+        ),
+      };
+      group.elements.forEach((item) => {
+        scrape[item.scrape.name] = item.el.innerText;
+      });
+      if (!addNestedScrape(scrp.captures, scrape)) {
+        scrp.captures.push(scrape);
+      }
+    });
+  });
+  return scrp;
+}
+
+function addNestedScrape(captures, update) {
+  for (let i = 0; i < captures.length; i++) {
+    const capture = captures[i];
+    if (isParentChild(capture.parent, update.parent)) {
+      if (capture.captures.length > 0) {
+        if (addNestedScrape(capture.captures, update)) {
+          return true;
+        }
+      }
+      capture.captures.push(update);
+      return true;
+    }
+  }
+  return false;
+}
 
 function groupLevels(levels) {
   const parents = [];
+
   levels.forEach((level, index) => {
-    parents.push(
-      ...document.querySelectorAll(
-        createSelector(level.parent, { isMulti: true })
-      )
-    );
+    parents.push(...document.querySelectorAll(level.parent));
+    parents.sort((a, b) => {
+      return isParentChild(a, b) ? 1 : -1;
+    });
     if (level.elements.length > 1) {
       for (let i = 0; i < level.elements.length; i++) {
         level.groups ??= new Map();
         const first = level.elements[i];
-        first.addElementToGroup = true;
+        const parent = parents.find((p) => isParentChild(p, first.el));
 
         if (first.addedToGroup) {
           continue;
         }
 
+        if (i === level.elements.length - 1 && !first.addedToGroup) {
+          const groups = level.groups.get(findListItem(first.el, parent)) || {
+            elements: [],
+          };
+          groups.elements.push(first);
+          level.groups.set(first.el.parentNode, groups);
+        }
+
         for (let j = i + 1; j < level.elements.length; j++) {
           const second = level.elements[j];
+          const isLast = j === level.elements.length - 1;
+          const cparent = findFirstCommonAncestor(first.el, second?.el, parent);
+
           if (second?.addedToGroup) {
+            if (isLast && !first.addedToGroup) {
+              const groups = level.groups.get(
+                findListItem(first.el, cparent)
+              ) || { elements: [] };
+              groups.elements.push(first);
+              level.groups.set(first.el.parentNode, groups);
+            }
             continue;
           }
 
-          const isLast = j === level.elements.length - 1;
-          const parent = findFirstCommonAncestor(first.el, second?.el);
-          if (!parents.includes(parent)) {
-            second.addElementToGroup = true;
-            const groups = level.groups.get(parent) || { elements: [] };
-            groups.elements.push(first);
+          if (!parents.includes(cparent)) {
+            second.addedToGroup = true;
+            const groups = level.groups.get(cparent) || { elements: [] };
+
+            if (!first.addedToGroup) {
+              // only add once
+              groups.elements.push(first);
+              first.addedToGroup = true;
+            }
             groups.elements.push(second);
-            level.groups.set(parent, groups);
-          } else if (isLast) {
-            const groups = level.groups.get(first.el.parentNode) || {
+            level.groups.set(cparent, groups);
+          } else if (isLast && !first.addedToGroup) {
+            const groups = level.groups.get(
+              findListItem(first.el, cparent)
+            ) || {
               elements: [],
             };
             groups.elements.push(first);
             level.groups.set(first.el.parentNode, groups);
           }
+          if (!first.addedToGroup) {
+          }
         }
       }
     }
   });
+
+  return levels;
 }
 
 function scrape2levels(scrapes, levels) {
@@ -133,7 +196,6 @@ function scrape2levels(scrapes, levels) {
 }
 
 function updateLevels(update, source) {
-  debugger;
   if (!source.length) {
     update.forEach(
       (v, i) =>
@@ -157,7 +219,6 @@ function updateLevels(update, source) {
 }
 
 function mergeLevels(levels) {
-  debugger;
   for (let i = 0; i < levels.length - 1; i++) {
     const level = levels[i];
     if (level.parent === null) {
@@ -224,7 +285,6 @@ function addElementToGroup(el, groups, list) {
 function determineLists(scrapes) {
   const lists = new Map();
 
-  debugger;
   Object.keys(scrapes).forEach((path) => {
     const scrape = scrapes[path];
     const updates = new Map();
@@ -266,7 +326,6 @@ function mergeLists(main, updates) {
       const mLists = Array.from(main.keys());
       let parentList;
       let childValue = null;
-      debugger;
       for (let i = 0; i < mLists.length; i++) {
         parentList = findNestedParent(list, mLists[i], main.get(mLists[i]));
 
