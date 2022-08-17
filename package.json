@@ -1,0 +1,13 @@
+{
+  "name": "poc-list-step",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/scaljeri/scrape-lists.git",
+  "author": "Lucas Calje <lucas@calje.eu>",
+  "license": "MIT",
+  "dependencies": {
+    "tsc": "^2.0.4",
+    "tsc-watch": "^5.0.3",
+    "typescript": "^4.7.4"
+  }
+}

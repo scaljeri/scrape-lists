@@ -1,4 +1,4 @@
-window.findFirstCommonAncestor = (nodeA, nodeB, root) => {
+export function findFirstCommonAncestor(nodeA: any, nodeB: any, root?: any) {
   if (!nodeA) {
     return findListItem(nodeB, root);
   } else if (!nodeB) {
@@ -21,9 +21,9 @@ window.findFirstCommonAncestor = (nodeA, nodeB, root) => {
   return range.commonAncestorContainer;
 };
 
-window.countParentChild = (parent, child) => {
+export function cocuntParentChild(parent: any, child: any) {
   let count = 0;
-  while(child !== parent && child.parentNode) {
+  while (child !== parent && child.parentNode) {
     child = child.parentNode;
     count++;
   }
@@ -31,12 +31,12 @@ window.countParentChild = (parent, child) => {
   return count;
 }
 
-window.isParentChild = (parent, child) => {
+export function isParentChild(parent: any, child: any) {
   return parent !== child && parent.contains(child);
 };
 
-window.findListItem = (a, root) => {
-  if(!root) {
+export function findListItem(a: any, root: any) {
+  if (!root) {
     return a.parentNode;
   }
 
